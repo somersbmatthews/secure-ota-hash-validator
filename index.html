@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure OTA Hash Validator</title>
+  <meta name="description" content="Interactive demo of how a connected vehicle verifies an over-the-air software update using SHA-256.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Connected Vehicle Security Demo</p>
+      <h1>Secure OTA Hash Validator</h1>
+      <p class="lede">
+        Before an ECU installs an over-the-air (OTA) update, the vehicle computes a SHA-256 hash
+        of the downloaded package and compares it with a trusted value. If even one bit has
+        changed, the hashes won't match and the update is rejected.
+      </p>
+    </header>
+
+    <div id="crypto-warning" class="notice notice-error" hidden>
+      This browser can't access the Web Crypto API here. Serve the page over HTTPS
+      (or from <code>localhost</code>) to run the demo.
+    </div>
+
+    <section class="card" aria-labelledby="step1-title">
+      <h2 id="step1-title"><span class="step">1</span>Select an ECU update</h2>
+      <fieldset class="update-list" id="update-list">
+        <legend class="visually-hidden">Available sample updates</legend>
+      </fieldset>
+    </section>
+
+    <section class="card" aria-labelledby="pkg-title">
+      <div class="card-head">
+        <h2 id="pkg-title"><span class="step">2</span>Downloaded package</h2>
+        <button type="button" id="tamper-btn" class="btn btn-warn">Simulate tampered update</button>
+      </div>
+
+      <dl class="pkg-meta">
+        <div><dt>Target ECU</dt><dd id="meta-ecu">—</dd></div>
+        <div><dt>Version</dt><dd id="meta-version">—</dd></div>
+        <div><dt>Image size</dt><dd id="meta-size">—</dd></div>
+        <div><dt>Integrity state</dt><dd id="meta-state">—</dd></div>
+      </dl>
+
+      <p id="tamper-note" class="notice notice-warn" hidden></p>
+
+      <details class="hex-details">
+        <summary>Inspect package bytes</summary>
+        <pre id="hex-view" class="hex-view" aria-label="Hex dump of package bytes"></pre>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="step3-title">
+      <h2 id="step3-title"><span class="step">3</span>Calculate and compare</h2>
+
+      <div class="actions">
+        <button type="button" id="calc-btn" class="btn btn-primary">Calculate SHA-256</button>
+        <button type="button" id="compare-btn" class="btn" disabled>Compare with trusted hash</button>
+      </div>
+
+      <div class="hash-block">
+        <div class="hash-label">Trusted hash <span class="muted">(from OEM update manifest)</span></div>
+        <code id="trusted-hash" class="hash">—</code>
+      </div>
+      <div class="hash-block">
+        <div class="hash-label">Calculated hash <span class="muted" id="calc-time"></span></div>
+        <code id="computed-hash" class="hash">Not calculated yet</code>
+      </div>
+
+      <div id="result" class="result" role="status" aria-live="polite" hidden>
+        <div class="result-badge" id="result-badge"></div>
+        <p class="result-text" id="result-text"></p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="log-title">
+      <h2 id="log-title">Vehicle update log</h2>
+      <ol id="log" class="log" aria-live="off"></ol>
+    </section>
+
+    <section class="card explainer" aria-labelledby="explain-title">
+      <h2 id="explain-title">How real OTA systems go further</h2>
+      <p>
+        A hash proves a package hasn't changed, but on its own it doesn't prove <em>who</em>
+        produced it. An attacker who can replace the update could also replace a hash sent
+        alongside it. Production OTA systems therefore add:
+      </p>
+      <ul>
+        <li>
+          <strong>Digital signatures.</strong> The manufacturer signs the update metadata
+          (including the expected hashes) with a private key, typically using ECDSA or RSA.
+          The vehicle verifies the signature before trusting any hash in it.
+        </li>
+        <li>
+          <strong>Trusted certificates.</strong> The vehicle holds the OEM's root certificate or
+          public keys, often protected in a hardware security module (HSM). It accepts only
+          signatures that chain back to that root of trust.
+        </li>
+        <li>
+          <strong>Additional safeguards.</strong> Frameworks such as Uptane add version and
+          rollback protection, expiring metadata, and separation of signing roles. Secure
+          boot then re-checks the firmware each time the ECU starts.
+        </li>
+      </ul>
+      <p class="muted small">
+        This page is a simplified, educational demonstration. All packages are synthetic and
+        all hashing happens locally in your browser using the Web Crypto API.
+      </p>
+    </section>
+  </main>
+
+  <script src="firmware.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
