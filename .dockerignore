@@ -1,7 +1,0 @@
-# Only the static site files are copied into the image.
-*
-!index.html
-!styles.css
-!firmware.js
-!app.js
-!nginx.conf

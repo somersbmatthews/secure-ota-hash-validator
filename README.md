@@ -22,25 +22,15 @@ highlights the hex characters that differ.
 ## Running it
 
 There are no dependencies and no build step. The Web Crypto API only works in a secure
-context, so serve the folder from `localhost` or over HTTPS.
+context, so serve the folder from `localhost` or over HTTPS with any static server.
 
-With Docker:
-
-```sh
-docker compose up --build        # http://localhost:8080
-```
-
-The image serves the site with an unprivileged nginx and strict security headers, including
-a Content-Security-Policy that only allows the site's own files. Compose runs it with a
-read-only filesystem, all capabilities dropped and `no-new-privileges` set. For any
-deployment other than `localhost`, put it behind HTTPS (for example a TLS-terminating
-reverse proxy).
-
-Or with any static server:
+For example:
 
 ```sh
-python3 -m http.server 8000      # http://localhost:8000
+python3 -m http.server 8000
 ```
+
+Then open <http://localhost:8000>.
 
 Opening `index.html` straight from disk (`file://`) may not work in every browser. If
 `crypto.subtle` isn't available, the page shows a warning.
@@ -52,11 +42,7 @@ Opening `index.html` straight from disk (`file://`) may not work in every browse
 ├── index.html               # Page markup
 ├── styles.css               # Styles (light/dark theme tokens)
 ├── firmware.js              # Sample update catalog, trusted manifest, image generator
-├── app.js                   # UI logic: selection, tampering, hashing, comparison, log
-├── Dockerfile               # nginx-unprivileged image
-├── nginx.conf               # Security headers, caching, gzip
-├── compose.yaml             # Hardened local run
-└── .dockerignore
+└── app.js                   # UI logic: selection, tampering, hashing, comparison, log
 ```
 
 ## How the sample firmware works
