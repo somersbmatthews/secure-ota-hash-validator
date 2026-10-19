@@ -3,9 +3,8 @@
  *
  * Each "firmware image" is generated deterministically from a seed, so the
  * same bytes are produced every time and the trusted SHA-256 values below
- * stay valid. If you change the catalog, regenerate the hashes with:
- *
- *   node scripts/compute-hashes.js
+ * stay valid. If you change the catalog, regenerate the hashes from the
+ * browser console (see "How the sample firmware works" in README.md).
  */
 (function (root) {
   'use strict';

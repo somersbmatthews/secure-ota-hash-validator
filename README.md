@@ -22,16 +22,25 @@ highlights the hex characters that differ.
 ## Running it
 
 There are no dependencies and no build step. The Web Crypto API only works in a secure
-context, so serve the folder from `localhost` or over HTTPS:
+context, so serve the folder from `localhost` or over HTTPS.
+
+With Docker:
 
 ```sh
-# any static server works, for example:
-python3 -m http.server 8000
-# or
-npx serve .
+docker compose up --build        # http://localhost:8080
 ```
 
-Then open <http://localhost:8000>.
+The image serves the site with an unprivileged nginx and strict security headers, including
+a Content-Security-Policy that only allows the site's own files. Compose runs it with a
+read-only filesystem, all capabilities dropped and `no-new-privileges` set. For any
+deployment other than `localhost`, put it behind HTTPS (for example a TLS-terminating
+reverse proxy).
+
+Or with any static server:
+
+```sh
+python3 -m http.server 8000      # http://localhost:8000
+```
 
 Opening `index.html` straight from disk (`file://`) may not work in every browser. If
 `crypto.subtle` isn't available, the page shows a warning.
@@ -44,8 +53,10 @@ Opening `index.html` straight from disk (`file://`) may not work in every browse
 ├── styles.css               # Styles (light/dark theme tokens)
 ├── firmware.js              # Sample update catalog, trusted manifest, image generator
 ├── app.js                   # UI logic: selection, tampering, hashing, comparison, log
-└── scripts/
-    └── compute-hashes.js    # Prints the SHA-256 of each sample image (Node.js)
+├── Dockerfile               # nginx-unprivileged image
+├── nginx.conf               # Security headers, caching, gzip
+├── compose.yaml             # Hardened local run
+└── .dockerignore
 ```
 
 ## How the sample firmware works
@@ -56,13 +67,15 @@ seeded PRNG (mulberry32). Because the bytes never change, the hashes in `TRUSTED
 stay valid.
 
 If you add, remove or change a catalog entry (size, seed, version, etc.), regenerate the
-trusted hashes:
+trusted hashes. Open the running page, paste this into the browser's developer console,
+and copy the output into `TRUSTED_MANIFEST` in `firmware.js`:
 
-```sh
-node scripts/compute-hashes.js
+```js
+for (const e of OTAFirmware.CATALOG) {
+  const d = await crypto.subtle.digest('SHA-256', OTAFirmware.buildImage(e).bytes);
+  console.log(`    ${e.id}: '${[...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('')}',`);
+}
 ```
-
-Then paste the output into `TRUSTED_MANIFEST` in `firmware.js`.
 
 ## Disclaimer
 

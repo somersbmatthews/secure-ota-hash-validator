@@ -129,8 +129,9 @@
 
     const gap = document.createElement('span');
     gap.className = 'gap';
-    if (state.tamper) {
-      const rowStart = Math.floor(state.tamper.offset / HEX_ROW) * HEX_ROW;
+    const rowStart = state.tamper ? Math.floor(state.tamper.offset / HEX_ROW) * HEX_ROW : -1;
+    // A tampered byte inside the header rows is already highlighted above.
+    if (rowStart >= HEADER_ROWS * HEX_ROW) {
       gap.textContent = '…\n';
       el.hexView.append(gap);
       el.hexView.append(hexRow(rowStart, highlight));
@@ -241,13 +242,20 @@
 
   async function calculateHash() {
     if (!state.entry) return;
+    // Tampering or switching updates while hashing makes this result stale.
+    const bytes = state.bytes;
+    const tamper = state.tamper;
     el.calcBtn.disabled = true;
     el.computedHash.textContent = 'Calculating…';
 
     try {
       const start = performance.now();
-      const digest = await crypto.subtle.digest('SHA-256', state.bytes);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
       const elapsed = performance.now() - start;
+      if (bytes !== state.bytes || tamper !== state.tamper) {
+        log('Package changed while hashing; result discarded.', 'warn');
+        return;
+      }
       state.computed = toHex(digest);
       el.computedHash.textContent = state.computed;
       el.calcTime.textContent = '(' + elapsed.toFixed(1) + ' ms, in your browser)';
